@@ -9,7 +9,7 @@ def find_linear_dependence(vectors):
     '''Return a basis for the nullspace of the matrix formed by combining
     the input column vectors (over GF(2)).
     '''
-    # Put the row vectors into a matrix
+    # Arrange the vectors as the rows of a matrix A
     # We want to find a solution to A^T v = 0
     # We do this by column operations on A^T or row operations on A
     A = np.array(vectors)
