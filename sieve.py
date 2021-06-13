@@ -3,7 +3,9 @@ from quadres import solve_quadres, check_quadres
 
 
 def sieve(n):
-    '''Return a list of primes up to and including n'''
+    '''Return a list of primes up to and including n.
+    Implements the sieve of Eratosthenes.
+    '''
     A = [True] * (n - 1)
     for i in range(2, ceil(n**0.5)):
         if A[i - 2]:
@@ -28,13 +30,19 @@ def quadsieve(n, B, k, add_terms=False):
     seqf = [[0 if x >= 0 else 1] + bsize * [0] for x in seqq]
     gens = []
     for ip, p in enumerate(filtered_primes):
+        # Solve x^2 = n mod p
+        # We only get the first solution here
         sol = solve_quadres(n % p, p)
+        # Smallest value of x >= min_x such that x = a mod p
         sc1 = sol + p * ceil((min_x - sol) / p)
         for s in range(sc1, max_x + 1, p):
             i = s - min_x
+            # Repeatedly divide x^2 - n by p until it is no longer divisible
             while not (seqq[i] % p):
                 seqq[i] //= p
                 seqf[i][ip + 1] = (seqf[i][ip + 1] + 1) % 2
+
+        # Repeat the steps above for the other solution
         sol2 = p - sol
         sc2 = sol2 + p * ceil((min_x - sol2) / p)
         for s in range(sc2, max_x + 1, p):
@@ -42,11 +50,14 @@ def quadsieve(n, B, k, add_terms=False):
             while not (seqq[i] % p):
                 seqq[i] //= p
                 seqf[i][ip + 1] = (seqf[i][ip + 1] + 1) % 2
+        # Add these solutions to an array for later use
+        # if we need to find more B-smooth terms.
         if add_terms:
             gens.append((p, ip, sol,))
             gens.append((p, ip, sol2,))
     vectors = [(x, x**2 - n, v) for x, t, v in
                zip(seqx, seqq, seqf) if abs(t) == 1]
+    # Find enough B-smooth terms such that linear dependence is guaranteed.
     k = max_x + 1
     if add_terms:
         while len(vectors) < bsize + 2:
