@@ -66,7 +66,6 @@ def quadsieve(n, B, M, add_terms=False):
             v = bsize * [0] + [0]
             for ip, p in enumerate(filtered_primes):
                 while not (mq % p):
-                    print(mq)
                     mq //= p
                     v[ip] = (v[ip] + 1) % 2
             if abs(mq) == 1:
