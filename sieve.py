@@ -1,19 +1,21 @@
-from math import ceil
+from math import ceil, isqrt
 from quadres import solve_quadres, check_quadres
 
 
 def sieve(n):
     '''Return a list of primes up to and including n.
-    Implements the sieve of Eratosthenes.
+    Implements the sieve of Eratosthenes with bit packing.
     '''
-    A = [True] * (n - 1)
-    for i in range(2, ceil(n**0.5)):
-        if A[i - 2]:
-            A[2 * i - 2::i] = [False] * len(A[2 * i - 2::i])
-    return [i + 2 for i in range(len(A)) if A[i]]
+    sq = isqrt(n)
+    sieve = (1 << n) - 1
+    for k in range(2, sq + 1):
+        i = k - 2
+        if sieve & (1 << i):
+            sieve &= ~sum([1 << j for j in range(i + k, n - 1, k)])
+    return [i + 2 for i in range(n - 1) if sieve & (1 << i)]
 
 
-def quadsieve(n, B, k, add_terms=False):
+def quadsieve(n, B, M, add_terms=False):
     '''Find B-smooth numbers and their exponent vectors out of
     the sequence x^2 - n for x from sqrt(n) to sqrt(n)+k.
     Return a tuple (x, x^2 - n, v) where v is the exponent vector.
@@ -23,13 +25,12 @@ def quadsieve(n, B, k, add_terms=False):
     x_centre = ceil(n**0.5)
     # pi(B)
     bsize = len(filtered_primes)
-    seqx = [x for x in range(max(x_centre - k, 1), x_centre + k)]
+    seqx = [x for x in range(max(x_centre - M, 1), x_centre + M)]
     seqq = [x ** 2 - n for x in seqx]
     max_x = seqx[-1]
     min_x = seqx[0]
     # Last entry is for the sign of the number
     seqf = [bsize * [0] + [0 if x >= 0 else 1] for x in seqq]
-    gens = []
     for ip, p in enumerate(filtered_primes):
         # Solve x^2 = n mod p
         # We only get the first solution here
@@ -51,14 +52,10 @@ def quadsieve(n, B, k, add_terms=False):
             while not (seqq[i] % p):
                 seqq[i] //= p
                 seqf[i][ip] = (seqf[i][ip] + 1) % 2
-        # Add these solutions to an array for later use
-        # if we need to find more B-smooth terms.
-        if add_terms:
-            gens.append((p, ip, sol,))
-            gens.append((p, ip, sol2,))
     vectors = [(x, x**2 - n, v) for x, t, v in
                zip(seqx, seqq, seqf) if abs(t) == 1]
     # Find enough B-smooth terms such that linear dependence is guaranteed.
+    # This is slow so M should be sufficiently large
     # Only runs if the add_terms is set to True.
     k = max_x + 1
     kn = min_x - 1
@@ -67,8 +64,9 @@ def quadsieve(n, B, k, add_terms=False):
             q = k ** 2 - n
             mq = q
             v = bsize * [0] + [0]
-            for p, ip, sol in gens:
+            for ip, p in enumerate(filtered_primes):
                 while not (mq % p):
+                    print(mq)
                     mq //= p
                     v[ip] = (v[ip] + 1) % 2
             if abs(mq) == 1:
@@ -80,7 +78,7 @@ def quadsieve(n, B, k, add_terms=False):
                 q = kn ** 2 - n
                 mq = q
                 v = bsize * [0] + [1]
-                for p, ip, sol in gens:
+                for ip, p in enumerate(filtered_primes):
                     while not (mq % p):
                         mq //= p
                         v[ip] = (v[ip] + 1) % 2

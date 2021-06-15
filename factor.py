@@ -6,10 +6,11 @@ from math import isqrt
 
 def factor(N, B, M, add_vectors=True):
     vectors = quadsieve(N, B, M, add_terms=add_vectors)
+    if not vectors:
+        return set()
     nullspace = find_linear_dependence([v[2] for v in vectors])
     if not nullspace:
-        raise ValueError('Not enough exponent vectors found.\
-Try increasing B or M.')
+        return set()
     divisors = set()
     for b in nullspace:
         x = 1
